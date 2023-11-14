@@ -1,4 +1,4 @@
-FROM tomcat:jdk8-openjdk
+FROM tomcat:8.5-jdk8-openjdk
 
 # website files
 COPY target/verademo.war /usr/local/tomcat/webapps
