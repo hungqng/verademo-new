@@ -122,6 +122,15 @@
 										</td>
 									</tr>
 									<tr>
+										<td>TOTP Root</td>
+										<td>
+											<div class="form-group">
+												<input type="text" class="form-control" name="totpRoot"
+													value="<%=request.getAttribute("totpRoot")%>" />
+											</div>
+										</td>
+									</tr>
+									<tr>
 										<td colspan="2">
 											<button type="submit" class="btn btn-primary"
 												id="login" name="Update" value="Update">Update</button>
