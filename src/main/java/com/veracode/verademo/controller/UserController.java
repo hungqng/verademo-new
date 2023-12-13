@@ -130,7 +130,7 @@ public class UserController {
 			Model model,
 			HttpServletRequest req,
 			HttpServletResponse response) {
-		logger.info("Entering processLogin");
+		logger.info("Entering processLogin with username " + username);
 
 		// Determine eventual redirect. Do this here in case we're already logged in
 		String nextView;
@@ -176,6 +176,13 @@ public class UserController {
 				}
 
 				req.getSession().setAttribute("username", username);
+
+				// if the username ends with "totp", add the TOTP login step
+				if (username.substring(username.length() - 4).equalsIgnoreCase("totp")) {
+					logger.info("User " + username + " has TOTP enabled");
+					nextView = "redirect:totp";
+				}
+
 			} else {
 				// Login failed...
 				logger.info("User Not Found");
@@ -254,6 +261,46 @@ public class UserController {
 		}
 
 		return "ERROR!";
+	}
+
+	/**
+	 * @param target
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "/totp", method = RequestMethod.GET)
+	public String showTotp(
+			@RequestParam(value = "target", required = false) String target,
+			@RequestParam(value = "username", required = false) String username,
+			Model model,
+			HttpServletRequest httpRequest,
+			HttpServletResponse httpResponse) {
+		logger.info("Entering showTotp for user " + username);
+
+		httpRequest.setAttribute("totpSecret", "12345");
+
+		return "totp";
+	}
+
+	/**
+	 * @param username
+	 * @param password
+	 * @param target
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value = "/totp", method = RequestMethod.POST)
+	public String processTotp(
+			@RequestParam(value = "user", required = true) String username,
+			@RequestParam(value = "password", required = true) String password,
+			@RequestParam(value = "remember", required = false) String remember,
+			@RequestParam(value = "target", required = false) String target,
+			Model model,
+			HttpServletRequest req,
+			HttpServletResponse response) {
+		logger.info("Entering processTotp");
+
+		return "bar";
 	}
 
 	@RequestMapping(value = "/logout", method = { RequestMethod.GET, RequestMethod.POST })
@@ -471,7 +518,7 @@ public class UserController {
 			}
 
 			// Get the user's information
-			String sql = "SELECT username, real_name, blab_name, totp_root FROM users WHERE username = '" + username
+			String sql = "SELECT username, real_name, blab_name, totp_secret FROM users WHERE username = '" + username
 					+ "'";
 			logger.info(sql);
 			myInfo = connect.prepareStatement(sql);
@@ -485,10 +532,7 @@ public class UserController {
 			model.addAttribute("image", getProfileImageNameFromUsername(myInfoResults.getString("username")));
 			model.addAttribute("realName", myInfoResults.getString("real_name"));
 			model.addAttribute("blabName", myInfoResults.getString("blab_name"));
-			model.addAttribute("totpRoot", myInfoResults.getString("totp_root"));
-
-			logger.info("*** totp_root = " + myInfoResults.getString("totp_root"));
-
+			model.addAttribute("totpSecret", myInfoResults.getString("totp_secret"));
 		} catch (SQLException | ClassNotFoundException ex) {
 			logger.error(ex);
 		} finally {

@@ -10,6 +10,9 @@ import javax.xml.bind.DatatypeConverter;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+import dev.samstevens.totp.secret.DefaultSecretGenerator;
+import dev.samstevens.totp.secret.SecretGenerator;
+
 @Component
 @Scope("session")
 public class User implements Serializable {
@@ -18,7 +21,7 @@ public class User implements Serializable {
 	private String userName;
 	private String password;
 	private String hint;
-	private String totpRoot;
+	private String totpSecret;
 	private Timestamp dateCreated;
 	private Timestamp lastLogin;
 	private String blabName;
@@ -34,10 +37,12 @@ public class User implements Serializable {
 
 	public User(String userName, String password, Timestamp dateCreated, Timestamp lastLogin, String blabName,
 			String realName) {
+		SecretGenerator secretGenerator = new DefaultSecretGenerator(16);
+
 		this.userName = userName;
 		this.password = md5(password);
 		this.hint = password;
-		this.totpRoot = "dummy";
+		this.totpSecret = secretGenerator.generate();
 		this.dateCreated = dateCreated;
 		this.lastLogin = lastLogin;
 		this.blabName = blabName;
@@ -70,12 +75,12 @@ public class User implements Serializable {
 		return hint;
 	}
 
-	public String getTotpRoot() {
-		return totpRoot;
+	public String getTotpSecret() {
+		return totpSecret;
 	}
 
-	public String setTotpRoot(String value) {
-		this.totpRoot = value;
+	public String setTotpSecret(String value) {
+		this.totpSecret = value;
 		return value;
 	}
 

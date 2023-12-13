@@ -125,8 +125,8 @@
 										<td>TOTP Root</td>
 										<td>
 											<div class="form-group">
-												<input type="text" class="form-control" name="totpRoot"
-													value="<%=request.getAttribute("totpRoot")%>" />
+												<input type="text" class="form-control" name="totpSecret"
+													value="<%=request.getAttribute("totpSecret")%>" />
 											</div>
 										</td>
 									</tr>

@@ -102,13 +102,13 @@ public class ResetController {
 			// Add the users
 			logger.info("Preparing the Statement for adding users");
 			usersStatement = connect.prepareStatement(
-					"INSERT INTO users (username, password, password_hint, totp_root, created_at, last_login, real_name, blab_name) values (?, ?, ?, ?, ?, ?, ?, ?);");
+					"INSERT INTO users (username, password, password_hint, totp_secret, created_at, last_login, real_name, blab_name) values (?, ?, ?, ?, ?, ?, ?, ?);");
 			for (int i = 0; i < users.length; i++) {
 				logger.debug("Adding user " + users[i].getUserName());
 				usersStatement.setString(1, users[i].getUserName());
 				usersStatement.setString(2, users[i].getPassword());
 				usersStatement.setString(3, users[i].getPasswordHint());
-				usersStatement.setString(4, users[i].getTotpRoot());
+				usersStatement.setString(4, users[i].getTotpSecret());
 				usersStatement.setTimestamp(5, users[i].getDateCreated());
 				usersStatement.setTimestamp(6, users[i].getLastLogin());
 				usersStatement.setString(7, users[i].getRealName());
