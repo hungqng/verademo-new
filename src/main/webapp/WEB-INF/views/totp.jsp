@@ -81,7 +81,7 @@
 									<tr>
 										<td>TOTP Code</td>
 										<td><div class="form-group">
-												<input type="text" class="form-control" name="totpCode"
+												<input type="text" class="form-control" name="totpcode"
 													value="">
 									</tr>
 									<tr>

@@ -51,6 +51,13 @@ import com.veracode.verademo.utils.Constants;
 import com.veracode.verademo.utils.User;
 import com.veracode.verademo.utils.UserFactory;
 
+import dev.samstevens.totp.code.CodeGenerator;
+import dev.samstevens.totp.code.CodeVerifier;
+import dev.samstevens.totp.code.DefaultCodeGenerator;
+import dev.samstevens.totp.code.DefaultCodeVerifier;
+import dev.samstevens.totp.time.SystemTimeProvider;
+import dev.samstevens.totp.time.TimeProvider;
+
 /**
  * @author johnadmin
  */
@@ -265,14 +272,11 @@ public class UserController {
 	}
 
 	/**
-	 * @param target
 	 * @param model
 	 * @return
 	 */
 	@RequestMapping(value = "/totp", method = RequestMethod.GET)
 	public String showTotp(
-			// @RequestParam(value = "target", required = false) String target,
-			// @RequestParam(value = "username", required = false) String username,
 			Model model,
 			HttpServletRequest httpRequest,
 			HttpServletResponse httpResponse) {
@@ -280,6 +284,7 @@ public class UserController {
 		logger.info("Entering showTotp for user " + username);
 
 		// lookup the TOTP secret
+		// really here to display back to the user (it's a hack for a demo app ;) )
 		try {
 			Class.forName("com.mysql.jdbc.Driver");
 
@@ -306,24 +311,58 @@ public class UserController {
 	}
 
 	/**
-	 * @param username
-	 * @param password
-	 * @param target
+	 * @param totpcode
 	 * @param model
 	 * @return
 	 */
 	@RequestMapping(value = "/totp", method = RequestMethod.POST)
 	public String processTotp(
-			@RequestParam(value = "user", required = true) String username,
-			@RequestParam(value = "password", required = true) String password,
-			@RequestParam(value = "remember", required = false) String remember,
-			@RequestParam(value = "target", required = false) String target,
+			@RequestParam(value = "totpcode", required = false) String totpCode,
 			Model model,
-			HttpServletRequest req,
-			HttpServletResponse response) {
-		logger.info("Entering processTotp");
+			HttpServletRequest httpRequest,
+			HttpServletResponse httpResponse) {
+		String username = (String) httpRequest.getSession().getAttribute("username");
+		logger.info("Entering processTotp for user " + username + ", code entered: " + totpCode);
 
-		return "bar";
+		String nextView = "redirect:login"; // assume we're going to fail
+
+		// lookup the TOTP secret
+		try {
+			Class.forName("com.mysql.jdbc.Driver");
+
+			Connection connect = DriverManager.getConnection(Constants.create().getJdbcConnectionString());
+
+			String sql = "SELECT totp_secret FROM users WHERE username = '" + username + "'";
+			logger.info(sql);
+			Statement statement = connect.createStatement();
+			ResultSet result = statement.executeQuery(sql);
+			if (result.first()) {
+				String totpSecret = result.getString("totp_secret");
+				logger.info("Found TOTP secret");
+
+				// validate the TOTP code
+				TimeProvider timeProvider = new SystemTimeProvider();
+				CodeGenerator codeGenerator = new DefaultCodeGenerator();
+				CodeVerifier verifier = new DefaultCodeVerifier(codeGenerator, timeProvider);
+
+				// secret = the shared secret for the user
+				// code = the code submitted by the user
+				if (verifier.isValidCode(totpSecret, totpCode)) {
+					logger.info("TOTP validation success");
+					nextView = "redirect:feed";
+				} else {
+					logger.info("TOTP validation failure");
+				}
+			} else {
+				logger.info("Failed to find TOTP secret in database - something is very wrong");
+			}
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+		return nextView;
 	}
 
 	@RequestMapping(value = "/logout", method = { RequestMethod.GET, RequestMethod.POST })
