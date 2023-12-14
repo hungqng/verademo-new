@@ -175,6 +175,7 @@ public class UserController {
 					UserFactory.updateInResponse(currentUser, response);
 				}
 
+				logger.info("Setting session username to " + username);
 				req.getSession().setAttribute("username", username);
 
 				// if the username ends with "totp", add the TOTP login step
@@ -270,14 +271,36 @@ public class UserController {
 	 */
 	@RequestMapping(value = "/totp", method = RequestMethod.GET)
 	public String showTotp(
-			@RequestParam(value = "target", required = false) String target,
-			@RequestParam(value = "username", required = false) String username,
+			// @RequestParam(value = "target", required = false) String target,
+			// @RequestParam(value = "username", required = false) String username,
 			Model model,
 			HttpServletRequest httpRequest,
 			HttpServletResponse httpResponse) {
+		String username = (String) httpRequest.getSession().getAttribute("username");
 		logger.info("Entering showTotp for user " + username);
 
-		httpRequest.setAttribute("totpSecret", "12345");
+		// lookup the TOTP secret
+		try {
+			Class.forName("com.mysql.jdbc.Driver");
+
+			Connection connect = DriverManager.getConnection(Constants.create().getJdbcConnectionString());
+
+			String sql = "SELECT totp_secret FROM users WHERE username = '" + username + "'";
+			logger.info(sql);
+			Statement statement = connect.createStatement();
+			ResultSet result = statement.executeQuery(sql);
+			if (result.first()) {
+				String totpSecret = result.getString("totp_secret");
+				logger.info("Found TOTP secret");
+				httpRequest.setAttribute("totpSecret", totpSecret);
+			} else {
+				httpRequest.setAttribute("totpSecret", "unknown");
+			}
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 
 		return "totp";
 	}
