@@ -74,8 +74,6 @@
 					</div>
 					<div class="panel-body">
 						<form method="POST" action="<%= request.getAttribute("javax.servlet.forward.request_uri") %>">
-							<input type="hidden" name="target"
-								value="<%=(String) request.getAttribute("target")%>">
 							<table class="table table-condensed">
 								<tbody>
 									<tr>

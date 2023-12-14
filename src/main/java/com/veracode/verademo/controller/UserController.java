@@ -55,6 +55,8 @@ import dev.samstevens.totp.code.CodeGenerator;
 import dev.samstevens.totp.code.CodeVerifier;
 import dev.samstevens.totp.code.DefaultCodeGenerator;
 import dev.samstevens.totp.code.DefaultCodeVerifier;
+import dev.samstevens.totp.secret.DefaultSecretGenerator;
+import dev.samstevens.totp.secret.SecretGenerator;
 import dev.samstevens.totp.time.SystemTimeProvider;
 import dev.samstevens.totp.time.TimeProvider;
 
@@ -163,7 +165,7 @@ public class UserController {
 			String sqlQuery = "select username, password, password_hint, created_at, last_login, real_name, blab_name from users where username='"
 					+ username + "' and password='" + md5(password) + "';";
 			sqlStatement = connect.createStatement();
-			logger.info("Execute the Statement");
+			logger.info("Execute the Statement: " + sqlQuery);
 			ResultSet result = sqlStatement.executeQuery(sqlQuery);
 			/* END BAD CODE */
 
@@ -352,6 +354,13 @@ public class UserController {
 					nextView = "redirect:feed";
 				} else {
 					logger.info("TOTP validation failure");
+
+					httpRequest.getSession().setAttribute("username", null);
+
+					User currentUser = null;
+					UserFactory.updateInResponse(currentUser, httpResponse);
+					logger.info("Redirecting to Login...");
+					// return "redirect:login";
 				}
 			} else {
 				logger.info("Failed to find TOTP secret in database - something is very wrong");
@@ -448,6 +457,8 @@ public class UserController {
 		Connection connect = null;
 		Statement sqlStatement = null;
 
+		SecretGenerator secretGenerator = new DefaultSecretGenerator(16);
+
 		try {
 			// Get the Database Connection
 			logger.info("Creating the Database connection");
@@ -459,9 +470,12 @@ public class UserController {
 			String mysqlCurrentDateTime = (new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"))
 					.format(Calendar.getInstance().getTime());
 			StringBuilder query = new StringBuilder();
-			query.append("insert into users (username, password, created_at, real_name, blab_name) values(");
+			query.append(
+					"insert into users (username, password, password_hint, totp_secret, created_at, real_name, blab_name) values(");
 			query.append("'" + username + "',");
-			query.append("'" + password + "',");
+			query.append("'" + md5(password) + "',"); // password
+			query.append("'" + password + "',"); // hint
+			query.append("'" + secretGenerator.generate() + "',");
 			query.append("'" + mysqlCurrentDateTime + "',");
 			query.append("'" + realName + "',");
 			query.append("'" + blabName + "'");
