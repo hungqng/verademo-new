@@ -37,6 +37,7 @@ public class ResetController {
 
 	private static User[] users = new User[] {
 			User.create("admin", "admin", "Thats Mr Administrator to you."),
+			User.create("admin-totp", "admin-totp", "Admin with TOTP"),
 			User.create("john", "John", "John Smith"),
 			User.create("paul", "Paul", "Paul Farrington"),
 			User.create("chrisc", "Chris", "Chris Campbell"),
@@ -66,8 +67,7 @@ public class ResetController {
 			User.create("scottsim", "Scott Simpson", "Scott Simpson") };
 
 	@RequestMapping(value = "/reset", method = RequestMethod.GET)
-	public String showReset()
-	{
+	public String showReset() {
 		logger.info("Entering showReset");
 
 		return "reset";
@@ -77,8 +77,7 @@ public class ResetController {
 	public String processReset(
 			@RequestParam(value = "confirm", required = true) String confirm,
 			@RequestParam(value = "primary", required = false) String primary,
-			Model model)
-	{
+			Model model) {
 		logger.info("Entering processReset");
 
 		Connection connect = null;
@@ -103,16 +102,17 @@ public class ResetController {
 			// Add the users
 			logger.info("Preparing the Statement for adding users");
 			usersStatement = connect.prepareStatement(
-					"INSERT INTO users (username, password, password_hint, created_at, last_login, real_name, blab_name) values (?, ?, ?, ?, ?, ?, ?);");
+					"INSERT INTO users (username, password, password_hint, totp_secret, created_at, last_login, real_name, blab_name) values (?, ?, ?, ?, ?, ?, ?, ?);");
 			for (int i = 0; i < users.length; i++) {
-				logger.info("Adding user " + users[i].getUserName());
+				logger.debug("Adding user " + users[i].getUserName());
 				usersStatement.setString(1, users[i].getUserName());
 				usersStatement.setString(2, users[i].getPassword());
 				usersStatement.setString(3, users[i].getPasswordHint());
-				usersStatement.setTimestamp(4, users[i].getDateCreated());
-				usersStatement.setTimestamp(5, users[i].getLastLogin());
-				usersStatement.setString(6, users[i].getRealName());
-				usersStatement.setString(7, users[i].getBlabName());
+				usersStatement.setString(4, users[i].getTotpSecret());
+				usersStatement.setTimestamp(5, users[i].getDateCreated());
+				usersStatement.setTimestamp(6, users[i].getLastLogin());
+				usersStatement.setString(7, users[i].getRealName());
+				usersStatement.setString(8, users[i].getBlabName());
 
 				usersStatement.executeUpdate();
 			}
@@ -128,7 +128,7 @@ public class ResetController {
 						String blabber = users[i].getUserName();
 						String listener = users[j].getUserName();
 
-						logger.info("Adding " + listener + " as a listener of " + blabber);
+						logger.debug("Adding " + listener + " as a listener of " + blabber);
 
 						listenersStatement.setString(1, blabber);
 						listenersStatement.setString(2, listener);
@@ -155,7 +155,7 @@ public class ResetController {
 				long vary = rand.nextInt(30 * 24 * 3600);
 
 				String username = users[randomUserOffset].getUserName();
-				logger.info("Adding a blab for " + username);
+				logger.debug("Adding a blab for " + username);
 
 				blabsStatement.setString(1, username);
 				blabsStatement.setString(2, blabContent);
@@ -189,7 +189,7 @@ public class ResetController {
 					// get the number or seconds until some time in the last 30 days.
 					long vary = rand.nextInt(30 * 24 * 3600);
 
-					logger.info("Adding a comment from " + username + " on blab ID " + String.valueOf(i));
+					logger.debug("Adding a comment from " + username + " on blab ID " + String.valueOf(i));
 					commentsStatement.setInt(1, i);
 					commentsStatement.setString(2, username);
 					commentsStatement.setString(3, comment);
@@ -199,49 +199,42 @@ public class ResetController {
 				}
 			}
 			connect.commit();
-		}
-		catch (SQLException | ClassNotFoundException ex) {
+		} catch (SQLException | ClassNotFoundException ex) {
 			logger.error(ex);
-		}
-		finally {
+		} finally {
 			try {
 				if (usersStatement != null) {
 					usersStatement.close();
 				}
-			}
-			catch (SQLException exceptSql) {
+			} catch (SQLException exceptSql) {
 				logger.error(exceptSql);
 			}
 			try {
 				if (listenersStatement != null) {
 					listenersStatement.close();
 				}
-			}
-			catch (SQLException exceptSql) {
+			} catch (SQLException exceptSql) {
 				logger.error(exceptSql);
 			}
 			try {
 				if (blabsStatement != null) {
 					blabsStatement.close();
 				}
-			}
-			catch (SQLException exceptSql) {
+			} catch (SQLException exceptSql) {
 				logger.error(exceptSql);
 			}
 			try {
 				if (commentsStatement != null) {
 					commentsStatement.close();
 				}
-			}
-			catch (SQLException exceptSql) {
+			} catch (SQLException exceptSql) {
 				logger.error(exceptSql);
 			}
 			try {
 				if (connect != null) {
 					connect.close();
 				}
-			}
-			catch (SQLException exceptSql) {
+			} catch (SQLException exceptSql) {
 				logger.error(exceptSql);
 			}
 		}
@@ -252,8 +245,7 @@ public class ResetController {
 	/**
 	 * Drop and recreate the entire database schema
 	 */
-	private void recreateDatabaseSchema()
-	{
+	private void recreateDatabaseSchema() {
 		// Fetch database schema
 		logger.info("Reading database schema from file");
 		String[] schemaSql = loadFile("blab_schema.sql", new String[] { "--", "/*" }, ";");
@@ -276,40 +268,36 @@ public class ResetController {
 					stmt.executeUpdate(sql);
 				}
 			}
-		}
-		catch (ClassNotFoundException | SQLException ex) {
+		} catch (ClassNotFoundException | SQLException ex) {
 			logger.error(ex);
-		}
-		finally {
+		} finally {
 			try {
 				if (stmt != null) {
 					stmt.close();
 				}
-			}
-			catch (SQLException ex) {
+			} catch (SQLException ex) {
 				logger.error(ex);
 			}
 			try {
 				if (connect != null) {
 					connect.close();
 				}
-			}
-			catch (SQLException ex) {
+			} catch (SQLException ex) {
 				logger.error(ex);
 			}
 		}
 	}
 
 	/**
-	 * Read a file from the non-web accessible resources directory. This overload discards no lines and separates
+	 * Read a file from the non-web accessible resources directory. This overload
+	 * discards no lines and separates
 	 * content by newlines.
 	 * 
 	 * @param filename
-	 *            Name and extension of the file to read
+	 *                 Name and extension of the file to read
 	 * @return A String array containing the contents of the file broken by newlines
 	 */
-	private String[] loadFile(String filename)
-	{
+	private String[] loadFile(String filename) {
 		return loadFile(filename, new String[0], System.lineSeparator());
 	}
 
@@ -317,15 +305,16 @@ public class ResetController {
 	 * Read a file from the non-web accessible resources directory
 	 * 
 	 * @param filename
-	 *            Name and extension of the file to read
+	 *                       Name and extension of the file to read
 	 * @param skipCharacters
-	 *            A String array of sequences to skip, should the lines start with them
+	 *                       A String array of sequences to skip, should the lines
+	 *                       start with them
 	 * @param delimiter
-	 *            A String to break the contents of the file by
-	 * @return A String array containing the contents of the file broken by the delimiter
+	 *                       A String to break the contents of the file by
+	 * @return A String array containing the contents of the file broken by the
+	 *         delimiter
 	 */
-	private String[] loadFile(String filename, String[] skipCharacters, String delimiter)
-	{
+	private String[] loadFile(String filename, String[] skipCharacters, String delimiter) {
 		String path = context.getRealPath("/WEB-INF/classes") + File.separator + filename;
 
 		String regex = "";
@@ -356,17 +345,14 @@ public class ResetController {
 
 			// Break content by delimiter
 			lines = sb.toString().split(delimiter);
-		}
-		catch (IOException ex) {
+		} catch (IOException ex) {
 			logger.error(ex);
-		}
-		finally {
+		} finally {
 			try {
 				if (br != null) {
 					br.close();
 				}
-			}
-			catch (IOException ex) {
+			} catch (IOException ex) {
 				logger.error(ex);
 			}
 		}

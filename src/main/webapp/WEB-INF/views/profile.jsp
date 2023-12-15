@@ -10,7 +10,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="">
 <meta name="author" content="">
-<link rel="icon" href="../../favicon.ico">
+<link rel="icon" href="./favicon.ico">
 
 <title>Manage your Blab profile</title>
 
@@ -118,6 +118,15 @@
 											<div class="form-group">
 												<input type="text" class="form-control" name="username"
 													value="<%=request.getAttribute("username")%>" />
+											</div>
+										</td>
+									</tr>
+									<tr>
+										<td>TOTP Root</td>
+										<td>
+											<div class="form-group">
+												<input type="text" class="form-control" name="totpSecret"
+													value="<%=request.getAttribute("totpSecret")%>" />
 											</div>
 										</td>
 									</tr>

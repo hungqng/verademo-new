@@ -10,6 +10,9 @@ import javax.xml.bind.DatatypeConverter;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+import dev.samstevens.totp.secret.DefaultSecretGenerator;
+import dev.samstevens.totp.secret.SecretGenerator;
+
 @Component
 @Scope("session")
 public class User implements Serializable {
@@ -18,13 +21,13 @@ public class User implements Serializable {
 	private String userName;
 	private String password;
 	private String hint;
+	private String totpSecret;
 	private Timestamp dateCreated;
 	private Timestamp lastLogin;
 	private String blabName;
 	private String realName;
 
-	public static User create(String userName, String blabName, String realName)
-	{
+	public static User create(String userName, String blabName, String realName) {
 		String password = userName;
 		Timestamp dateCreated = new Timestamp(System.currentTimeMillis());
 		Timestamp lastLogin = null;
@@ -34,81 +37,81 @@ public class User implements Serializable {
 
 	public User(String userName, String password, Timestamp dateCreated, Timestamp lastLogin, String blabName,
 			String realName) {
+		SecretGenerator secretGenerator = new DefaultSecretGenerator(16);
+
 		this.userName = userName;
 		this.password = md5(password);
 		this.hint = password;
+		this.totpSecret = secretGenerator.generate();
 		this.dateCreated = dateCreated;
 		this.lastLogin = lastLogin;
 		this.blabName = blabName;
 		this.realName = realName;
 	}
 
-	public String getUserName()
-	{
+	public String getUserName() {
 		return userName;
 	}
 
-	public void setUserName(String userName)
-	{
+	public void setUserName(String userName) {
 		this.userName = userName;
 	}
 
-	public String getPassword()
-	{
+	public String getPassword() {
 		return password;
 	}
 
-	public String setPassword(String password)
-	{
+	public String setPassword(String password) {
 		this.password = md5(password);
 		return password;
 	}
-	
-	public String getPasswordHint()
-	{
+
+	public String getPasswordHint() {
 		return hint;
 	}
 
-	public String setPasswordHint(String hint)
-	{
+	public String setPasswordHint(String hint) {
 		this.hint = hint;
 		return hint;
 	}
 
-	public Timestamp getDateCreated()
-	{
+	public String getTotpSecret() {
+		return totpSecret;
+	}
+
+	public String setTotpSecret(String value) {
+		this.totpSecret = value;
+		return value;
+	}
+
+	public Timestamp getDateCreated() {
 		return dateCreated;
 	}
 
-	public Timestamp getLastLogin()
-	{
+	public Timestamp getLastLogin() {
 		return lastLogin;
 	}
 
-	public String getBlabName()
-	{
+	public String getBlabName() {
 		return blabName;
 	}
 
-	public String getRealName()
-	{
+	public String getRealName() {
 		return realName;
 	}
-	
-	private static String md5(String val)
-	{
+
+	private static String md5(String val) {
 		MessageDigest md;
 		String ret = null;
 		try {
 			md = MessageDigest.getInstance("MD5");
 			md.update(val.getBytes());
-		    byte[] digest = md.digest();
-		    ret = DatatypeConverter.printHexBinary(digest);
-		}
-		catch (NoSuchAlgorithmException e) {
+			byte[] digest = md.digest();
+			ret = DatatypeConverter.printHexBinary(digest);
+		} catch (NoSuchAlgorithmException e) {
 			e.printStackTrace();
 		}
-		
+
 		return ret;
 	}
 }

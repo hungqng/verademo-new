@@ -10,7 +10,7 @@
 <meta name="author" content="">
 <link rel="icon" href="./favicon.ico">
 
-<title>Register for Blab</title>
+<title>Login to Blab (TOTP)</title>
 
 <!-- Bootstrap core CSS -->
 <link href="resources/css/bootstrap.min.css" rel="stylesheet">
@@ -35,8 +35,8 @@
 			<nav>
 				<ul class="nav nav-pills pull-right">
 					<li role="presentation"><a href="reset">Reset</a></li>
-					<li role="presentation"><a href="login">Login</a></li>
-					<li role="presentation"><a href="register" class="active">Register</a></li>
+					<li role="presentation"><a href="login" class="active">Login</a></li>
+					<li role="presentation"><a href="register">Register</a></li>
 				</ul>
 			</nav>
 			<img src="resources/images/Tokyoship_Talk_icon.svg" height="100"
@@ -49,7 +49,7 @@
 	<div class="container theme-showcase" role="main">
 
 		<div class="page-header">
-			<h3>Register</h3>
+			<h3>Login (TOTP)</h3>
 		</div>
 
 		<%
@@ -64,56 +64,27 @@
 			}
 		%>
 
+
 		<div class="row">
 			<div class="col-md-12">
 
 				<div class="panel panel-default">
 					<div class="panel-heading">
-						<h3 class="panel-title">Please provide your user information
-							to register for Blab</h3>
+						<h3 class="panel-title">Please provide your TOTP code to login to Blab</h3>
 					</div>
 					<div class="panel-body">
-						<form method="POST" action="register-finish">
-							<input type="hidden" name="returnPath" value="">
+						<form method="POST" action="<%= request.getAttribute("javax.servlet.forward.request_uri") %>">
 							<table class="table table-condensed">
 								<tbody>
-																		<tr>
-										<td>Username</td>
-										<td><div class="form-group">
-												<%= request.getSession().getAttribute("username") %>
-											</div></td>
-									</tr>
 									<tr>
-										<td>Password</td>
+										<td>TOTP Code</td>
 										<td><div class="form-group">
-												<input type="password" class="form-control" name="password"
+												<input type="text" class="form-control" name="totpcode"
 													value="">
-											</div></td>
-									</tr>
-									<tr>
-										<td>Confirm Password</td>
-										<td><div class="form-group">
-												<input type="password" class="form-control" name="cpassword"
-													value="">
-											</div></td>
-									</tr>
-									<tr>
-										<td>Real Name</td>
-										<td><div class="form-group">
-												<input type="text" class="form-control" name="realName"
-													value="">
-											</div></td>
-									</tr>
-									<tr>
-										<td>Blab Name</td>
-										<td><div class="form-group">
-												<input type="text" class="form-control" name="blabName"
-													value="">
-											</div></td>
 									</tr>
 									<tr>
 										<td><button type="submit" class="btn btn-primary"
-												id="login" name="Register" value="Register">Register</button></td>
+												id="submit" name="Submit" value="Login">Submit</button></td>
 										<td></td>
 									</tr>
 								</tbody>
@@ -124,12 +95,10 @@
 			</div>
 		</div>
 	</div>
-	<!-- /container -->
 
-	<!-- Bootstrap core JavaScript
-    ================================================== -->
-	<!-- Placed at the end of the document so the pages load faster -->
-	<script src="resources/js/jquery-1.11.2.min.js"></script>
-	<script src="resources/js/bootstrap.min.js"></script>
+	<script>
+		var totpSecret = '${totpSecret}';
+		console.log("TOTP Secret: " + totpSecret);
+	</script>
 </body>
 </html>
